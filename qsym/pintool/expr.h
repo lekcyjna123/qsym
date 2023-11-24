@@ -362,7 +362,11 @@ public:
   inline llvm::APInt value() const { return value_; }
   inline bool isZero() const { return value_ == 0; }
   inline bool isOne() const { return value_ == 1; }
+#if LLVM_VERSION_MAJOR >= 16
   inline bool isAllOnes() const { return value_.isAllOnes(); }
+#else
+  inline bool isAllOnes() const { return value_.isAllOnesValue(); }
+#endif
   static bool classOf(const Expr& e) { return e.kind() == Constant; }
   UINT32 getActiveBits() const { return value_.getActiveBits(); }
   void print(ostream& os, UINT depth) const override;
