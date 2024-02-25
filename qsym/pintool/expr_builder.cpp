@@ -1140,6 +1140,269 @@ ExprBuilder* PruneExprBuilder::create() {
   return commu;
 }
 
+#define DEFINE_EXPR_BUILDER_CREATE(_name, _args, ...) \
+ExprRef ExprBuilder::_name(__VA_ARGS__) \
+{ \
+  return next_->_name _args; \
+}
+
+DEFINE_EXPR_BUILDER_CREATE(createBool, (b), bool b);
+DEFINE_EXPR_BUILDER_CREATE(createConstant, (value, bits), ADDRINT value, UINT32 bits);
+DEFINE_EXPR_BUILDER_CREATE(createConstant, (value, bits), llvm::APInt value, UINT32 bits);
+DEFINE_EXPR_BUILDER_CREATE(createRead, (off), ADDRINT off);
+DEFINE_EXPR_BUILDER_CREATE(createConcat, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createExtract, (e, index, bits), ExprRef e, UINT32 index, UINT32 bits);
+DEFINE_EXPR_BUILDER_CREATE(createZExt, (e, bits), ExprRef e, UINT32 bits);
+DEFINE_EXPR_BUILDER_CREATE(createSExt, (e, bits), ExprRef e, UINT32 bits);
+DEFINE_EXPR_BUILDER_CREATE(createAdd, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createSub, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createMul, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createUDiv, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createSDiv, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createURem, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createSRem, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createNeg, (e), ExprRef e);
+DEFINE_EXPR_BUILDER_CREATE(createNot, (e), ExprRef e);
+DEFINE_EXPR_BUILDER_CREATE(createAnd, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createOr, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createXor, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createShl, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createLShr, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createAShr, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createEqual, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createDistinct, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createUlt, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createUle, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createUgt, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createUge, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createSlt, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createSle, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createSgt, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createSge, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createLOr, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createLAnd, (l,r), ExprRef l, ExprRef r);
+DEFINE_EXPR_BUILDER_CREATE(createLNot, (e), ExprRef e);
+DEFINE_EXPR_BUILDER_CREATE(createIte, (expr_cond, expr_true, expr_false), ExprRef expr_cond, ExprRef expr_true, ExprRef expr_false);
+#undef DEFINE_EXPR_BUILDER_CREATE
+
+#define DEFINE_BINARY_EXPR_CASE(kind) \
+  case kind: \
+    return create##kind(l, r);
+
+ExprRef ExprBuilder::createBinaryExpr(Kind kind, ExprRef l, ExprRef r)
+{
+  switch (kind) {
+DEFINE_BINARY_EXPR_CASE(Add)
+DEFINE_BINARY_EXPR_CASE(Sub)
+DEFINE_BINARY_EXPR_CASE(Mul)
+DEFINE_BINARY_EXPR_CASE(UDiv)
+DEFINE_BINARY_EXPR_CASE(SDiv)
+DEFINE_BINARY_EXPR_CASE(URem)
+DEFINE_BINARY_EXPR_CASE(SRem)
+DEFINE_BINARY_EXPR_CASE(And)
+DEFINE_BINARY_EXPR_CASE(Or)
+DEFINE_BINARY_EXPR_CASE(Xor)
+DEFINE_BINARY_EXPR_CASE(Shl)
+DEFINE_BINARY_EXPR_CASE(LShr)
+DEFINE_BINARY_EXPR_CASE(AShr)
+DEFINE_BINARY_EXPR_CASE(Equal)
+DEFINE_BINARY_EXPR_CASE(Distinct)
+DEFINE_BINARY_EXPR_CASE(Ult)
+DEFINE_BINARY_EXPR_CASE(Ule)
+DEFINE_BINARY_EXPR_CASE(Ugt)
+DEFINE_BINARY_EXPR_CASE(Uge)
+DEFINE_BINARY_EXPR_CASE(Slt)
+DEFINE_BINARY_EXPR_CASE(Sle)
+DEFINE_BINARY_EXPR_CASE(Sgt)
+DEFINE_BINARY_EXPR_CASE(Sge)
+DEFINE_BINARY_EXPR_CASE(LOr)
+DEFINE_BINARY_EXPR_CASE(LAnd)
+  default:
+    LOG_FATAL("Non-binary expr: " + std::to_string(kind) + "\n");
+    return NULL;
+  }
+}
+#undef DEFINE_BINARY_EXPR_CASE
+
+ExprRef ExprBuilder::createUnaryExpr(Kind kind, ExprRef e) {
+switch (kind) {
+  case Not:
+    return createNot(e);
+  case Neg:
+    return createNeg(e);
+  case LNot:
+    return createLNot(e);
+  default:
+    LOG_FATAL("Non-unary expr: " + std::to_string(kind) + "\n");
+    return NULL;
+  }
+}
+
+#define DEFINE_BASEEXPRBUILDER(_name, _args, ...) \
+ExprRef BaseExprBuilder::create##_name (__VA_ARGS__){ \
+ExprRef ref = std::make_shared<_name##Expr> _args; \
+addUses(ref); \
+return ref; \
+} 
+
+DEFINE_BASEEXPRBUILDER(Bool, (b), bool b);
+DEFINE_BASEEXPRBUILDER(Constant, (value, bits), ADDRINT value, UINT32 bits);
+DEFINE_BASEEXPRBUILDER(Constant, (value, bits), llvm::APInt value, UINT32 bits);
+DEFINE_BASEEXPRBUILDER(Concat, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(ZExt, (e, bits), ExprRef e, UINT32 bits);
+DEFINE_BASEEXPRBUILDER(SExt, (e, bits), ExprRef e, UINT32 bits);
+DEFINE_BASEEXPRBUILDER(Add, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Sub, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Mul, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(UDiv, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(SDiv, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(URem, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(SRem, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Neg, (e), ExprRef e);
+DEFINE_BASEEXPRBUILDER(Not, (e), ExprRef e);
+DEFINE_BASEEXPRBUILDER(And, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Or, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Xor, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Shl, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(LShr, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(AShr, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Equal, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Distinct, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Ult, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Ule, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Ugt, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Uge, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Slt, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Sle, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Sgt, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(Sge, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(LOr, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(LAnd, (l,r), ExprRef l, ExprRef r);
+DEFINE_BASEEXPRBUILDER(LNot, (e), ExprRef e);
+DEFINE_BASEEXPRBUILDER(Ite, (expr_cond, expr_true, expr_false), ExprRef expr_cond, ExprRef expr_true, ExprRef expr_false);
+#undef DEFINE_BASEEXPRBUILDER
+
+#define DEFINE_CACHE_EXPR(_name, _args, ...)\
+ExprRef CacheExprBuilder::_name(__VA_ARGS__) { \
+  ExprRef new_expr = ExprBuilder::_name _args; \
+  return findOrInsert(new_expr); \
+}
+
+
+DEFINE_CACHE_EXPR(createConcat, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createExtract, (e, index, bits), ExprRef e, UINT32 index, UINT32 bits);
+DEFINE_CACHE_EXPR(createZExt, (e, bits), ExprRef e, UINT32 bits);
+DEFINE_CACHE_EXPR(createSExt, (e, bits), ExprRef e, UINT32 bits);
+DEFINE_CACHE_EXPR(createAdd, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createSub, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createMul, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createUDiv, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createSDiv, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createURem, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createSRem, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createNeg, (e), ExprRef e);
+DEFINE_CACHE_EXPR(createNot, (e), ExprRef e);
+DEFINE_CACHE_EXPR(createAnd, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createOr, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createXor, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createShl, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createLShr, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createAShr, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createEqual, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createDistinct, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createUlt, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createUle, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createUgt, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createUge, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createSlt, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createSle, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createSgt, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createSge, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createLOr, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createLAnd, (l,r), ExprRef l, ExprRef r);
+DEFINE_CACHE_EXPR(createLNot, (e), ExprRef e);
+DEFINE_CACHE_EXPR(createIte, (expr_cond, expr_true, expr_false), ExprRef expr_cond, ExprRef expr_true, ExprRef expr_false);
+#undef DEFINE_CACHE_EXPR
+
+#define DEFINE_COMMUTATIVE_EXPR_BUILDER(_name, _commut_name) \
+ExprRef CommutativeExprBuilder::_name(ExprRef l, ExprRef r) { \
+  NonConstantExprRef nce_l = castAs<NonConstantExpr>(l); \
+  ConstantExprRef ce_r = castAs<ConstantExpr>(r); \
+  if (nce_l != NULL && ce_r != NULL) \
+    return _commut_name(ce_r, nce_l); \
+  return ExprBuilder::_name(l, r); \
+}
+
+#define DEFINE_COMMUTATIVE_EXPR_BUILDER_SAME(_name) DEFINE_COMMUTATIVE_EXPR_BUILDER(_name, _name)
+
+DEFINE_COMMUTATIVE_EXPR_BUILDER_SAME(createAdd);
+DEFINE_COMMUTATIVE_EXPR_BUILDER_SAME(createMul);
+DEFINE_COMMUTATIVE_EXPR_BUILDER_SAME(createAnd);
+DEFINE_COMMUTATIVE_EXPR_BUILDER_SAME(createOr);
+DEFINE_COMMUTATIVE_EXPR_BUILDER_SAME(createXor);
+DEFINE_COMMUTATIVE_EXPR_BUILDER_SAME(createEqual);
+DEFINE_COMMUTATIVE_EXPR_BUILDER_SAME(createDistinct);
+DEFINE_COMMUTATIVE_EXPR_BUILDER_SAME(createLAnd);
+DEFINE_COMMUTATIVE_EXPR_BUILDER_SAME(createLOr);
+DEFINE_COMMUTATIVE_EXPR_BUILDER(createUlt, createUgt);
+DEFINE_COMMUTATIVE_EXPR_BUILDER(createUle, createUge);
+DEFINE_COMMUTATIVE_EXPR_BUILDER(createUgt, createUlt);
+DEFINE_COMMUTATIVE_EXPR_BUILDER(createUge, createUle);
+DEFINE_COMMUTATIVE_EXPR_BUILDER(createSlt, createSgt);
+DEFINE_COMMUTATIVE_EXPR_BUILDER(createSle, createSge);
+DEFINE_COMMUTATIVE_EXPR_BUILDER(createSgt, createSlt);
+DEFINE_COMMUTATIVE_EXPR_BUILDER(createSge, createSle);
+#undef DEFINE_COMMUTATIVE_EXPR_BUILDER_SAME
+#undef DEFINE_COMMUTATIVE_EXPR_BUILDER
+
+
+#define CONST_FOLD_OP_BINARY(_kind, _sym) \
+   ce_l->value() _sym ce_r->value()
+
+#define CONST_FOLD_OP_FUNC(_kind, _sym) \
+  ce_l->value()._sym(ce_r->value())
+
+#define CONST_FOLD_RET_CONST(_kind, _op, _sym) \
+  createConstant( CONST_FOLD_OP_##_op(_kind, _sym) , l->bits());
+
+#define CONST_FOLD_RET_BOOL(_kind, _op, _sym) \
+  createBool( CONST_FOLD_OP_##_op(_kind, _sym) );
+
+#define DEFINE_CONST_FOLDING_EXPR_BUILDER(_kind, _ret, _op, _sym) \
+ExprRef ConstantFoldingExprBuilder::create##_kind(ExprRef l, ExprRef r) { \
+  ConstantExprRef ce_l = castAs<ConstantExpr>(l); \
+  ConstantExprRef ce_r = castAs<ConstantExpr>(r); \
+ \
+  if (ce_l != NULL && ce_r != NULL) { \
+    QSYM_ASSERT(l->bits() == r->bits()); \
+    return CONST_FOLD_RET_##_ret(_kind, _op, _sym); \
+  } \
+  else \
+    return ExprBuilder::create##_kind(l, r); \
+}
+
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Add, CONST, BINARY, +)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Sub, CONST, BINARY, -)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Mul, CONST, BINARY, *)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(UDiv, CONST, FUNC, udiv)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(SDiv, CONST, FUNC, sdiv)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(URem, CONST, FUNC, urem)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(SRem, CONST, FUNC, srem)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(And, CONST, BINARY, &)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Or, CONST, BINARY, |)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Xor, CONST, BINARY, ^)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Shl, CONST, BINARY, <<)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(LShr, CONST, FUNC, lshr)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(AShr, CONST, FUNC, ashr)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Ult, BOOL, FUNC, ult)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Ule, BOOL, FUNC, ule)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Ugt, BOOL, FUNC, ugt)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Uge, BOOL, FUNC, uge)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Slt, BOOL, FUNC, slt)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Sle, BOOL, FUNC, sle)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Sgt, BOOL, FUNC, sgt)
+DEFINE_CONST_FOLDING_EXPR_BUILDER(Sge, BOOL, FUNC, sge)
+
 {CODEGEN}
 
 } // namespace qsym

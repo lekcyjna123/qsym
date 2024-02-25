@@ -12,7 +12,6 @@ public:
   ExprBuilder();
   void setNext(ExprBuilder* next);
 
-  // {BEGIN:FUNC}
   virtual ExprRef createBool(bool b);
   virtual ExprRef createConstant(ADDRINT value, UINT32 bits);
   virtual ExprRef createConstant(llvm::APInt value, UINT32 bits);
@@ -50,7 +49,6 @@ public:
   virtual ExprRef createLAnd(ExprRef l, ExprRef r);
   virtual ExprRef createLNot(ExprRef e);
   virtual ExprRef createIte(ExprRef expr_cond, ExprRef expr_true, ExprRef expr_false);
-  // {END:FUNC}
 
   // utility functions
   ExprRef createTrue();
@@ -75,7 +73,6 @@ public:
   ExprRef createExtract(ExprRef e, UINT32 index, UINT32 bits) override;
   ExprRef createRead(ADDRINT off) override;
 
-  // {BEGIN:BASE}
   ExprRef createBool(bool b) override;
   ExprRef createConstant(ADDRINT value, UINT32 bits) override;
   ExprRef createConstant(llvm::APInt value, UINT32 bits) override;
@@ -111,12 +108,10 @@ public:
   ExprRef createLAnd(ExprRef l, ExprRef r) override;
   ExprRef createLNot(ExprRef e) override;
   ExprRef createIte(ExprRef expr_cond, ExprRef expr_true, ExprRef expr_false) override;
-  // {END:BASE}
 };
 
 class CacheExprBuilder : public ExprBuilder {
 public:
-  // {BEGIN:CACHE}
   ExprRef createConcat(ExprRef l, ExprRef r) override;
   ExprRef createExtract(ExprRef e, UINT32 index, UINT32 bits) override;
   ExprRef createZExt(ExprRef e, UINT32 bits) override;
@@ -150,7 +145,6 @@ public:
   ExprRef createLAnd(ExprRef l, ExprRef r) override;
   ExprRef createLNot(ExprRef e) override;
   ExprRef createIte(ExprRef expr_cond, ExprRef expr_true, ExprRef expr_false) override;
-  // {END:CACHE}
 
 protected:
   ExprCache cache_;
@@ -163,7 +157,6 @@ protected:
 
 class CommutativeExprBuilder : public ExprBuilder {
 public:
-  // {BEGIN:COMMUTATIVE}
   ExprRef createAdd(ExprRef l, ExprRef r) override;
   ExprRef createMul(ExprRef l, ExprRef r) override;
   ExprRef createAnd(ExprRef l, ExprRef r) override;
@@ -181,7 +174,6 @@ public:
   ExprRef createSge(ExprRef l, ExprRef r) override;
   ExprRef createLAnd(ExprRef l, ExprRef r) override;
   ExprRef createLOr(ExprRef l, ExprRef r) override;
-  // {END:COMMUTATIVE}
   ExprRef createSub(ExprRef l, ExprRef r) override;
 };
 
