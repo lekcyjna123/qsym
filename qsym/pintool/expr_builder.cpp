@@ -1402,7 +1402,43 @@ DEFINE_CONST_FOLDING_EXPR_BUILDER(Slt, BOOL, FUNC, slt)
 DEFINE_CONST_FOLDING_EXPR_BUILDER(Sle, BOOL, FUNC, sle)
 DEFINE_CONST_FOLDING_EXPR_BUILDER(Sgt, BOOL, FUNC, sgt)
 DEFINE_CONST_FOLDING_EXPR_BUILDER(Sge, BOOL, FUNC, sge)
+#undef DEFINE_CONST_FOLDING_EXPR_BUILDER
+#undef CONST_FOLD_OP_FUNC
+#undef CONST_FOLD_OP_BINARY
+#undef CONST_FOLD_RET_BOOL
+#undef CONST_FOLD_RET_CONST
 
-{CODEGEN}
+#define DEFINE_PRUNE_EXPR_BUILDER(_name, _args, ...) \
+ExprRef PruneExprBuilder::_name(__VA_ARGS__) { \
+  ExprRef ref = ExprBuilder::_name _args; \
+  g_call_stack_manager.updateBitmap(); \
+  if (g_call_stack_manager.isInteresting()) \
+    return ref; \
+  else \
+    return ref->evaluate(); \
+}
+
+DEFINE_PRUNE_EXPR_BUILDER(createZExt, (e, bits), ExprRef e, UINT32 bits);
+DEFINE_PRUNE_EXPR_BUILDER(createSExt, (e, bits), ExprRef e, UINT32 bits);
+DEFINE_PRUNE_EXPR_BUILDER(createAdd, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createSub, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createMul, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createUDiv, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createSDiv, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createURem, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createSRem, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createNeg, (e), ExprRef e);
+DEFINE_PRUNE_EXPR_BUILDER(createNot, (e), ExprRef e);
+DEFINE_PRUNE_EXPR_BUILDER(createAnd, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createOr, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createXor, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createShl, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createLShr, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createAShr, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createLOr, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createLAnd, (l,r), ExprRef l, ExprRef r);
+DEFINE_PRUNE_EXPR_BUILDER(createLNot, (e), ExprRef e);
+DEFINE_PRUNE_EXPR_BUILDER(createIte, (expr_cond, expr_true, expr_false), ExprRef expr_cond, ExprRef expr_true, ExprRef expr_false);
+#undef DEFINE_PRUNE_EXPR_BUILDER
 
 } // namespace qsym
