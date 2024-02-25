@@ -415,7 +415,19 @@ void BinaryExpr::print(ostream& os, UINT depth, const char* op) const {
     os << ")";
 }
 
-{CODEGEN}
+#define DEFINE_EXPR_PRINT(_op, _name) \
+void _name##Expr::print(ostream& os, UINT depth) const { \
+  BinaryExpr::print(os, depth, _op); \
+}
+DEFINE_EXPR_PRINT("+", Add);
+DEFINE_EXPR_PRINT("-", Sub);
+DEFINE_EXPR_PRINT("*", Mul);
+DEFINE_EXPR_PRINT("/_s", SDiv);
+DEFINE_EXPR_PRINT("/_u", UDiv);
+DEFINE_EXPR_PRINT("%_s", SRem);
+DEFINE_EXPR_PRINT("%_u", URem);
+#undef DEFINE_EXPR_PRINT
+
 
 } // namespace qsym
 

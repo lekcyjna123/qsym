@@ -48,9 +48,8 @@ DLL_ROOTS :=
 LIB_ROOTS :=
 
 THIRD_PARTIES := $(wildcard third_party/*/)
-GENCODE := $(patsubst codegen/gen_%.py, %__gen.cpp, $(wildcard codegen/*.py))
 OBJDIRS := $(addprefix $(OBJDIR), $(THIRD_PARTIES))
-SRCS := $(sort $(wildcard *.cpp $(addsuffix *.cpp, $(THIRD_PARTIES))) $(GENCODE))
+SRCS := $(sort $(wildcard *.cpp $(addsuffix *.cpp, $(THIRD_PARTIES))))
 OBJS := $(patsubst %.cpp, $(OBJDIR)%$(OBJ_SUFFIX), $(SRCS))
 
 ###### Define the sanity subset ######
@@ -93,9 +92,6 @@ TOOL_LIBS += -lz3
 # See makefile.default.rules for the default build rules.
 $(OBJDIR)$(TEST_TOOL_ROOTS)$(PINTOOL_SUFFIX): third_party $(OBJS)
 	$(LINKER) $(TOOL_LDFLAGS) $(LINK_EXE)$@ $(OBJS) $(TOOL_LPATHS) $(TOOL_LIBS)
-
-%__gen.cpp: codegen/gen_%.py codegen/%.cpp
-	@$<
 
 third_party:
 	@for dir in $(OBJDIRS); do \
